@@ -50,7 +50,6 @@ const KanbanBoard: React.FC = () => {
   encounters.forEach((encounter) => {
     const dashboard = dashboardsByEncounterId[encounter.encounter_id] ?? null;
     const suggestedTier = resolveSuggestedTier(dashboard);
-    const currentFlag = dashboard?.live_state?.current_flag;
 
     const subtitleParts: string[] = [
       `Current Stage : ${currentStageLabels[encounter.current_stage] || encounter.current_stage}`,

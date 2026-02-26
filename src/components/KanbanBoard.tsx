@@ -9,6 +9,8 @@ interface CardData {
   id: string;
   title: string;
   subtitle?: string[];
+  triageTier?: number | null;
+  useFullTierBorder?: boolean;
   encounter?: EncounterData;
   dashboard?: NurseDashboardResponse | null;
 }
@@ -50,6 +52,7 @@ const KanbanBoard: React.FC = () => {
   encounters.forEach((encounter) => {
     const dashboard = dashboardsByEncounterId[encounter.encounter_id] ?? null;
     const suggestedTier = resolveSuggestedTier(dashboard);
+    const isTriageFinishedStage = String(encounter.current_stage) === 'triage_finished';
 
     const subtitleParts: string[] = [
       `Current Stage : ${currentStageLabels[encounter.current_stage] || encounter.current_stage}`,
@@ -60,12 +63,14 @@ const KanbanBoard: React.FC = () => {
       id: encounter.encounter_token,
       title: encounter.patient_identity?.full_name || 'Unknown Patient',
       subtitle: subtitleParts,
+      triageTier: suggestedTier,
+      useFullTierBorder: isTriageFinishedStage,
       encounter,
       dashboard,
     };
 
     if (isTriageCompleted(dashboard)) {
-      if (suggestedTier !== null && suggestedTier <= 2) {
+      if (isTriageFinishedStage && suggestedTier !== null && suggestedTier <= 2) {
         urgentCards.push(card);
         return;
       }

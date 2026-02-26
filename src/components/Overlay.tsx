@@ -344,8 +344,19 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, encounter }) => {
                           ].filter((value, index, arr) => arr.indexOf(value) === index);
                           const options = getQuestionOptions(payload);
                           const isExpanded = Boolean(expandedQuestionIds[event.id]);
-
-                          const answerText = options.find((option) => option.internal_label === (event.user_answer_payload as Record<string, unknown>)[0])?.patient_facing_label || event.normalized_answer_text;
+                          const rawUserAnswer = event.user_answer_payload;
+                          const userAnswerRecord = asRecord(rawUserAnswer);
+                          const selectedAnswerKey =
+                            (Array.isArray(rawUserAnswer) && typeof rawUserAnswer[0] === 'string' ? rawUserAnswer[0] : null)
+                            || (typeof rawUserAnswer === 'string' ? rawUserAnswer : null)
+                            || getStringField(userAnswerRecord, 'internal_label')
+                            || getStringField(userAnswerRecord, 'answer')
+                            || getStringField(userAnswerRecord, 'value');
+                          const answerText =
+                            (selectedAnswerKey
+                              ? options.find((option) => option.internal_label === selectedAnswerKey)?.patient_facing_label
+                              : null)
+                            || event.normalized_answer_text;
 
                           return (
                             <>

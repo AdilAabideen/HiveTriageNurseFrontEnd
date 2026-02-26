@@ -5,6 +5,8 @@ interface CardData {
   id: string;
   title: string;
   subtitle?: string[];
+  triageTier?: number | null;
+  useFullTierBorder?: boolean;
 }
 
 interface KanbanColumnProps {
@@ -27,6 +29,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ title, cards, onCardClick }
             id={card.id}
             title={card.title}
             subtitle={card.subtitle}
+            triageTier={card.triageTier}
+            useFullTierBorder={card.useFullTierBorder}
             onClick={() => onCardClick(card)}
           />
         ))}
@@ -36,4 +40,3 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ title, cards, onCardClick }
 };
 
 export default KanbanColumn;
-

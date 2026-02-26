@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { EncounterData, Discriminator } from '../types/encounter';
+import React from 'react';
+import { EncounterData } from '../types/encounter';
 import ChiefComplaintView from './ChiefComplaintView';
 
 interface OverlayProps {
@@ -9,42 +9,6 @@ interface OverlayProps {
 }
 
 const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, encounter }) => {
-  const [discriminatorsData, setDiscriminatorsData] = useState<Record<string, Discriminator[]>>({});
-  const [loadingDiscriminators, setLoadingDiscriminators] = useState(false);
-
-  useEffect(() => {
-    if (!encounter || encounter.current_stage !== 'chief_complaint_complete' || !encounter.chief_complaint) {
-      return;
-    }
-
-    const fetchDiscriminators = async () => {
-      if (!encounter.chief_complaint?.presentations || encounter.chief_complaint.presentations.length === 0) {
-        return;
-      }
-
-      setLoadingDiscriminators(true);
-      try {
-        const presentationIds = encounter.chief_complaint.presentations.map(p => p.presentation_id);
-        
-        // Fetch discriminators from backend API
-        // The backend should use Neo4j MCP to execute:
-        // MATCH (p:Presentations)-[r:ASSESS_WITH]->(d:Discriminators)
-        // WHERE p.presentation_id IN $presentationIds
-        // RETURN p.presentation_id, p.label, r.tier, d.*
-        
-        const { fetchDiscriminatorsFromAPI } = await import('../utils/discriminators');
-        const result = await fetchDiscriminatorsFromAPI(presentationIds);
-        
-        setDiscriminatorsData(result);
-      } catch (error) {
-        console.error('Error fetching discriminators:', error);
-      } finally {
-        setLoadingDiscriminators(false);
-      }
-    };
-
-    fetchDiscriminators();
-  }, [encounter?.encounter_id, encounter?.current_stage]);
   return (
     <>
       {/* Backdrop */}
@@ -135,7 +99,7 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, encounter }) => {
                 <div className="border-t pt-6">
                   <ChiefComplaintView 
                     chiefComplaint={encounter.chief_complaint}
-                    discriminatorsData={discriminatorsData}
+                    discriminatorsData={{}}
                   />
                 </div>
               )}
@@ -180,4 +144,3 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, encounter }) => {
 };
 
 export default Overlay;
-

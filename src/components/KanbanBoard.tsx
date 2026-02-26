@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import KanbanColumn from './KanbanColumn';
 import Overlay from './Overlay';
-import { useInProgressEncounters } from '../hooks/useInProgressEncounters';
 import { EncounterData } from '../types/encounter';
 
 interface CardData {
@@ -14,23 +13,15 @@ interface CardData {
 const KanbanBoard: React.FC = () => {
   const [selectedEncounter, setSelectedEncounter] = useState<EncounterData | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  
-  const { encounters: inProgressEncounters } = useInProgressEncounters();
 
   // Sample data for each column
   const [currentOrderCards] = useState<CardData[]>([]);
 
   const [aiTriageOrderCards] = useState<CardData[]>([]);
 
-  const [nurseFlagsCards] = useState<CardData[]>([]);
+  const [inProgressCards] = useState<CardData[]>([]);
 
-  // Convert encounters to card data for In Progress column
-  const inProgressCards: CardData[] = inProgressEncounters.map(encounter => ({
-    id: encounter.encounter_token,
-    title: encounter.patient_identity?.full_name || 'Unknown Patient',
-    subtitle: encounter.current_stage.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    encounter: encounter,
-  }));
+  const [nurseFlagsCards] = useState<CardData[]>([]);
 
   const handleCardClick = (card: CardData) => {
     if (card.encounter) {
@@ -69,7 +60,7 @@ const KanbanBoard: React.FC = () => {
             onCardClick={handleCardClick}
           />
           <KanbanColumn
-            title="Nurse Flags"
+            title="Urgent"
             cards={nurseFlagsCards}
             onCardClick={handleCardClick}
           />
@@ -86,4 +77,3 @@ const KanbanBoard: React.FC = () => {
 };
 
 export default KanbanBoard;
-

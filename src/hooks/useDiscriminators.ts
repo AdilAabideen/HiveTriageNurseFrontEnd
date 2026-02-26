@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PresentationWithDiscriminators, Discriminator } from '../types/encounter';
+import { Discriminator } from '../types/encounter';
 
 // This hook will fetch discriminators for presentations
 // In production, this would call a backend API that uses Neo4j MCP
@@ -48,4 +48,3 @@ export const useDiscriminators = (presentationIds: string[]) => {
 
   return { discriminators, loading, error };
 };
-

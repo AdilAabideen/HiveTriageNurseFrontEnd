@@ -61,7 +61,7 @@ export interface PresentationWithDiscriminators {
 export interface EncounterData {
   encounter_id: string;
   encounter_token: string;
-  current_stage: 'safety_screen' | 'intake' | 'chief_complaint' | 'chief_complaint_complete' | 'nurse_review' | 'completed';
+  current_stage: 'safety_screen' | 'intake' | 'chief_complaint' | 'chief_complaint_complete' | 'nurse_review' | 'completed' | 'handoff_triage';
   status: 'active' | 'paused_for_review' | 'escalated' | 'completed' | 'closed';
   created_at: string;
   patient_identity: PatientIdentity | null;

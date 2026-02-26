@@ -2,26 +2,82 @@ import React, { useState } from 'react';
 import KanbanColumn from './KanbanColumn';
 import Overlay from './Overlay';
 import { EncounterData } from '../types/encounter';
+import { NurseDashboardResponse } from '../types/nurse';
+import { useNurseBoardData } from '../hooks/useNurseBoardData';
 
 interface CardData {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string[];
   encounter?: EncounterData;
+  dashboard?: NurseDashboardResponse | null;
 }
+
+const currentStageLabels: Record<EncounterData['current_stage'], string> = {
+  safety_screen: 'Safety Screening',
+  intake: 'Patient Intake',
+  chief_complaint: 'Chief Complaint',
+  chief_complaint_complete: 'Chief Complaint Complete',
+  nurse_review: 'Nurse Review',
+  completed: 'Completed',
+  handoff_triage: 'AI Triage in Progress',
+};
 
 const KanbanBoard: React.FC = () => {
   const [selectedEncounter, setSelectedEncounter] = useState<EncounterData | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const { encounters, dashboardsByEncounterId, loading, error } = useNurseBoardData();
 
-  // Sample data for each column
   const [currentOrderCards] = useState<CardData[]>([]);
 
-  const [aiTriageOrderCards] = useState<CardData[]>([]);
+  const aiTriageOrderCards: CardData[] = [];
+  const inProgressCards: CardData[] = [];
+  const urgentCards: CardData[] = [];
 
-  const [inProgressCards] = useState<CardData[]>([]);
+  const resolveSuggestedTier = (dashboard: NurseDashboardResponse | null | undefined): number | null => {
+    if (!dashboard) return null;
+    return dashboard.final_summary?.suggested_tier
+      ?? dashboard.live_state?.suggested_tier
+      ?? dashboard.live_state?.current_tier
+      ?? null;
+  };
 
-  const [nurseFlagsCards] = useState<CardData[]>([]);
+  const isTriageCompleted = (dashboard: NurseDashboardResponse | null | undefined): boolean => {
+    if (!dashboard) return false;
+    return dashboard.live_state?.status === 'completed' || Boolean(dashboard.final_summary);
+  };
+
+  encounters.forEach((encounter) => {
+    const dashboard = dashboardsByEncounterId[encounter.encounter_id] ?? null;
+    const suggestedTier = resolveSuggestedTier(dashboard);
+    const currentFlag = dashboard?.live_state?.current_flag;
+
+    const subtitleParts: string[] = [
+      `Current Stage : ${currentStageLabels[encounter.current_stage] || encounter.current_stage}`,
+      ...(suggestedTier !== null ? [`Tier : ${suggestedTier}`] : []),
+    ];
+
+    const card: CardData = {
+      id: encounter.encounter_token,
+      title: encounter.patient_identity?.full_name || 'Unknown Patient',
+      subtitle: subtitleParts,
+      encounter,
+      dashboard,
+    };
+
+    if (isTriageCompleted(dashboard)) {
+      if (suggestedTier !== null && suggestedTier <= 2) {
+        urgentCards.push(card);
+        return;
+      }
+      if (suggestedTier !== null && suggestedTier >= 3 && suggestedTier <= 5) {
+        aiTriageOrderCards.push(card);
+        return;
+      }
+    }
+
+    inProgressCards.push(card);
+  });
 
   const handleCardClick = (card: CardData) => {
     if (card.encounter) {
@@ -38,6 +94,10 @@ const KanbanBoard: React.FC = () => {
   return (
     <div className="h-screen w-full bg-gray-50 font-hind">
       <div className="p-4">
+        <div className="mb-3 text-sm text-gray-600 font-hind">
+          {loading ? 'Loading encounters and triage dashboards...' : `${encounters.length} encounters loaded`}
+          {error ? <span className="ml-2 text-red-600">Dashboard load warning: {error}</span> : null}
+        </div>
         <div className="grid grid-cols-4 gap-3 h-[calc(100vh-48px)]">
           <KanbanColumn
             title="Current Order"
@@ -45,7 +105,7 @@ const KanbanBoard: React.FC = () => {
             onCardClick={handleCardClick}
           />
           <KanbanColumn
-            title="Ai Traige Order"
+            title="AI Triage Order"
             cards={aiTriageOrderCards}
             onCardClick={handleCardClick}
           />
@@ -61,7 +121,7 @@ const KanbanBoard: React.FC = () => {
           />
           <KanbanColumn
             title="Urgent"
-            cards={nurseFlagsCards}
+            cards={urgentCards}
             onCardClick={handleCardClick}
           />
         </div>
